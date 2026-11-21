@@ -1,4 +1,5 @@
 #include "../internal.hpp"
+#include "../resources/memory.hpp"
 using vk::internal::require_device;
 using vk::internal::require_instance;
 using vk::internal::require_physical;
@@ -24,6 +25,7 @@ void idle() { require_device().waitIdle(); }
 void shutdown()
 {
     auto &s = *get();
+    if (s.handle) memory::shutdown();
     if (s.owned && s.handle) s.handle.destroy();
     s = {};
 }

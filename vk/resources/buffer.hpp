@@ -6,7 +6,10 @@ struct resource {
         vk::Buffer handle{};
         vk::DeviceMemory memory{};
         vk::DeviceSize size = 0;
+        vk::DeviceSize memory_offset = 0;
+        vk::DeviceSize memory_allocation_size = 0;
         vk::MemoryPropertyFlags properties{};
+        bool pooled = false;
         void *mapped = nullptr;
     };
     resource create(vk::DeviceSize size, vk::BufferUsageFlags usage,
