@@ -22,14 +22,19 @@ void build(C_Build *b)
     c_use(engine, headers);
 
 #ifdef _WIN32
-#define VK_PYTHON "python"
-#else
-#define VK_PYTHON "python3"
-#endif
+    // cbuild quotes the dependency root; join the suffix inside PowerShell
+    // so the complete path is passed as one argument to generate.py.
     c_generate(engine, "vk/api/generated.cpp", "@VulkanHeaders@/registry/vk.xml",
-        VK_PYTHON " vk/tools/generate.py @VulkanHeaders@/registry/vk.xml "
+        "python vk/tools/generate.py "
+        "$(Join-Path @VulkanHeaders@ 'registry/vk.xml') "
+        "vk/api/generated.hpp vk/api/generated.cpp --readme readme "
+        "--headers $(Join-Path @VulkanHeaders@ 'include') --vendor vk");
+#else
+    c_generate(engine, "vk/api/generated.cpp", "@VulkanHeaders@/registry/vk.xml",
+        "python3 vk/tools/generate.py @VulkanHeaders@/registry/vk.xml "
         "vk/api/generated.hpp vk/api/generated.cpp --readme readme "
         "--headers @VulkanHeaders@/include --vendor vk");
+#endif
 
 #ifdef __linux__
     c_link_system(engine, "dl");
