@@ -15,6 +15,13 @@ vk::PhysicalDevice adopt(vk::PhysicalDevice handle)
     s.features = handle.getFeatures();
     s.memory = handle.getMemoryProperties();
     s.queue_families = handle.getQueueFamilyProperties();
+    s.subgroups=vk::PhysicalDeviceSubgroupProperties{};
+    if(instance::get()->api_version>=VK_API_VERSION_1_1&&s.properties.apiVersion>=VK_API_VERSION_1_1&&
+       VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceProperties2){
+        vk::PhysicalDeviceProperties2 extended{};
+        extended.pNext=&s.subgroups;
+        handle.getProperties2(&extended);
+    }
     return handle;
 }
 vk::PhysicalDevice init(uint32_t index)
@@ -47,6 +54,48 @@ bool supports_extension(const char *name)
     for (auto &ext : require_physical().enumerateDeviceExtensionProperties())
         if (std::strcmp(ext.extensionName.data(), name) == 0) return true;
     return false;
+}
+bool supports_shader_float16_khr()
+{
+    if(!supports_extension(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME)||
+       !VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2KHR)return false;
+    VkPhysicalDeviceShaderFloat16Int8Features half{};
+    half.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
+    VkPhysicalDeviceFeatures2 features{};
+    features.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features.pNext=&half;
+    VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2KHR(
+        static_cast<VkPhysicalDevice>(require_physical()),&features);
+    return half.shaderFloat16!=VK_FALSE;
+}
+bool supports_synchronization2_khr()
+{
+    if(instance::get()->api_version<VK_API_VERSION_1_1||
+       !supports_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME)||
+       !VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2)return false;
+    VkPhysicalDeviceSynchronization2Features sync{};
+    sync.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+    VkPhysicalDeviceFeatures2 features{};
+    features.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;features.pNext=&sync;
+    VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2(static_cast<VkPhysicalDevice>(require_physical()),&features);
+    return sync.synchronization2!=VK_FALSE;
+}
+bool supports_timeline_semaphore_khr()
+{
+    if(!supports_extension(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME))return false;
+    VkPhysicalDeviceTimelineSemaphoreFeatures timeline{};
+    timeline.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
+    VkPhysicalDeviceFeatures2 features{};
+    features.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features.pNext=&timeline;
+    auto &dispatch=VULKAN_HPP_DEFAULT_DISPATCHER;
+    const auto physical=static_cast<VkPhysicalDevice>(require_physical());
+    if(instance::get()->api_version>=VK_API_VERSION_1_1&&dispatch.vkGetPhysicalDeviceFeatures2)
+        dispatch.vkGetPhysicalDeviceFeatures2(physical,&features);
+    else if(dispatch.vkGetPhysicalDeviceFeatures2KHR)
+        dispatch.vkGetPhysicalDeviceFeatures2KHR(physical,&features);
+    else return false;
+    return timeline.timelineSemaphore!=VK_FALSE;
 }
 void shutdown() { *get() = {}; }
 }

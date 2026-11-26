@@ -12,6 +12,8 @@ vk::Instance init(const vk::InstanceCreateInfo &info)
         throw std::runtime_error("Vulkan loader unavailable");
     auto handle = vk::createInstance(info);
     adopt(handle, true);
+    if(info.pApplicationInfo&&info.pApplicationInfo->apiVersion)
+        get()->api_version=info.pApplicationInfo->apiVersion;
     return handle;
 }
 void adopt(vk::Instance handle, bool owned)
@@ -21,6 +23,13 @@ void adopt(vk::Instance handle, bool owned)
     get()->handle = handle;
     get()->owned = owned;
     if (handle) VULKAN_HPP_DEFAULT_DISPATCHER.init(handle);
+}
+uint32_t loader_api_version()
+{
+    uint32_t version=VK_API_VERSION_1_0;
+    auto query=VULKAN_HPP_DEFAULT_DISPATCHER.vkEnumerateInstanceVersion;
+    if(query&&query(&version)!=VK_SUCCESS)return VK_API_VERSION_1_0;
+    return version;
 }
 std::vector<vk::PhysicalDevice> physical_devices()
 {
