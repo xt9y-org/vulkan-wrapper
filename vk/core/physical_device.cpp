@@ -70,14 +70,18 @@ bool supports_shader_float16_khr()
 }
 bool supports_synchronization2_khr()
 {
-    if(instance::get()->api_version<VK_API_VERSION_1_1||
-       !supports_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME)||
-       !VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2)return false;
+    if(!supports_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME))return false;
     VkPhysicalDeviceSynchronization2Features sync{};
     sync.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
     VkPhysicalDeviceFeatures2 features{};
     features.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;features.pNext=&sync;
-    VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2(static_cast<VkPhysicalDevice>(require_physical()),&features);
+    auto &dispatch=VULKAN_HPP_DEFAULT_DISPATCHER;
+    const auto physical=static_cast<VkPhysicalDevice>(require_physical());
+    if(instance::get()->api_version>=VK_API_VERSION_1_1&&dispatch.vkGetPhysicalDeviceFeatures2)
+        dispatch.vkGetPhysicalDeviceFeatures2(physical,&features);
+    else if(dispatch.vkGetPhysicalDeviceFeatures2KHR)
+        dispatch.vkGetPhysicalDeviceFeatures2KHR(physical,&features);
+    else return false;
     return sync.synchronization2!=VK_FALSE;
 }
 bool supports_timeline_semaphore_khr()

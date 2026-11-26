@@ -17,6 +17,15 @@ void draw_indexed(vk::CommandBuffer cmd, uint32_t v, uint32_t i, uint32_t f,
 void dispatch(vk::CommandBuffer cmd, uint32_t x, uint32_t y, uint32_t z) {
     cmd.dispatch(x, y, z);
 }
+void barrier2(vk::CommandBuffer cmd, const vk::DependencyInfo &info) {
+    if (!vk::device::synchronization2_available())
+        throw std::logic_error("Synchronization2 is not enabled");
+    const auto &d = VULKAN_HPP_DEFAULT_DISPATCHER;
+    if (vk::device::core_api(VK_API_VERSION_1_3) && d.vkQueueSubmit2 && d.vkCmdPipelineBarrier2)
+        cmd.pipelineBarrier2(info);
+    else
+        cmd.pipelineBarrier2KHR(info);
+}
 void copy(vk::CommandBuffer cmd, vk::Buffer src, vk::Buffer dst,
           const vk::BufferCopy &region) { cmd.copyBuffer(src, dst, region); }
 }

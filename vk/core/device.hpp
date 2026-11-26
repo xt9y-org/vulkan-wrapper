@@ -12,6 +12,9 @@ struct state {
         bool timeline_semaphore = false;
     };
     state *get();
+    bool core_api(uint32_t version);
+    bool synchronization2_available();
+    bool timeline_available();
     vk::Device init(const vk::DeviceCreateInfo &info);
     void adopt(vk::Device handle, bool owned = false);
     void idle();

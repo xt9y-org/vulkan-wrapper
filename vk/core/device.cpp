@@ -6,6 +6,25 @@ using vk::internal::require_physical;
 namespace vk {
 namespace device {
 state *get() { static state data; return &data; }
+bool core_api(uint32_t version)
+{
+    return instance::get()->api_version >= version &&
+           physical_device::get()->properties.apiVersion >= version;
+}
+bool synchronization2_available()
+{
+    const auto &d = VULKAN_HPP_DEFAULT_DISPATCHER;
+    return get()->synchronization2 &&
+        ((core_api(VK_API_VERSION_1_3) && d.vkQueueSubmit2 && d.vkCmdPipelineBarrier2) ||
+         (d.vkQueueSubmit2KHR && d.vkCmdPipelineBarrier2KHR));
+}
+bool timeline_available()
+{
+    const auto &d = VULKAN_HPP_DEFAULT_DISPATCHER;
+    return get()->timeline_semaphore &&
+        ((core_api(VK_API_VERSION_1_2) && d.vkGetSemaphoreCounterValue && d.vkWaitSemaphores && d.vkSignalSemaphore) ||
+         (d.vkGetSemaphoreCounterValueKHR && d.vkWaitSemaphoresKHR && d.vkSignalSemaphoreKHR));
+}
 vk::Device init(const vk::DeviceCreateInfo &info)
 {
     if (get()->handle) throw std::runtime_error("device already initialized");
