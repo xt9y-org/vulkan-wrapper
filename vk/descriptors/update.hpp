@@ -23,8 +23,8 @@ inline vk::WriteDescriptorSet binding(vk::DescriptorSet set,uint32_t slot,
     auto result=binding(set,slot,type,element);
     result.pImageInfo=&info;return result;
 }
-void write(const std::vector<vk::WriteDescriptorSet> &writes);
-void copy(const std::vector<vk::CopyDescriptorSet> &copies);
-void apply(const std::vector<vk::WriteDescriptorSet> &writes,
-           const std::vector<vk::CopyDescriptorSet> &copies);
+void write(const vk::ArrayProxy<const vk::WriteDescriptorSet> &writes);
+void copy(const vk::ArrayProxy<const vk::CopyDescriptorSet> &copies);
+void apply(const vk::ArrayProxy<const vk::WriteDescriptorSet> &writes,
+           const vk::ArrayProxy<const vk::CopyDescriptorSet> &copies);
 }
