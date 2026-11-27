@@ -5,7 +5,8 @@ namespace vk::util::math {
 struct vec2 {
     float x = 0, y = 0;
     constexpr vec2() = default;
-    constexpr bool operator==(const vec2 &) const = default;
+    constexpr bool operator==(const vec2 &b) const { return x == b.x && y == b.y; }
+    constexpr bool operator!=(const vec2 &b) const { return !(*this == b); }
     constexpr vec2(float x, float y) : x(x), y(y) {}
     constexpr vec2 operator+(vec2 b) const { return {x + b.x, y + b.y}; }
     constexpr vec2 operator-(vec2 b) const { return {x - b.x, y - b.y}; }
@@ -16,7 +17,8 @@ struct vec2 {
 struct vec3 {
     float x = 0, y = 0, z = 0;
     constexpr vec3() = default;
-    constexpr bool operator==(const vec3 &) const = default;
+    constexpr bool operator==(const vec3 &b) const { return x == b.x && y == b.y && z == b.z; }
+    constexpr bool operator!=(const vec3 &b) const { return !(*this == b); }
     constexpr vec3(float x, float y, float z) : x(x), y(y), z(z) {}
     constexpr vec3 operator+(vec3 b) const { return {x + b.x, y + b.y, z + b.z}; }
     constexpr vec3 operator-(vec3 b) const { return {x - b.x, y - b.y, z - b.z}; }
@@ -28,7 +30,8 @@ struct vec3 {
 struct vec4 {
     float x = 0, y = 0, z = 0, w = 0;
     constexpr vec4() = default;
-    constexpr bool operator==(const vec4 &) const = default;
+    constexpr bool operator==(const vec4 &b) const { return x == b.x && y == b.y && z == b.z && w == b.w; }
+    constexpr bool operator!=(const vec4 &b) const { return !(*this == b); }
     constexpr vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
     constexpr vec4(vec3 v, float w) : x(v.x), y(v.y), z(v.z), w(w) {}
     constexpr vec4 operator+(vec4 b) const { return {x + b.x, y + b.y, z + b.z, w + b.w}; }

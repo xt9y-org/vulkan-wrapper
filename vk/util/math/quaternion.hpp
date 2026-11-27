@@ -5,7 +5,8 @@ namespace vk::util::math {
 struct quat {
     float x = 0, y = 0, z = 0, w = 1;
     constexpr quat() = default;
-    constexpr bool operator==(const quat &) const = default;
+    constexpr bool operator==(const quat &b) const { return x == b.x && y == b.y && z == b.z && w == b.w; }
+    constexpr bool operator!=(const quat &b) const { return !(*this == b); }
     constexpr quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
     constexpr static quat identity() { return {}; }
 };
