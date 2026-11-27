@@ -3,12 +3,12 @@ namespace vk::framebuffer {
 vk::Framebuffer create(const vk::FramebufferCreateInfo &info) {
     return vk::internal::require_device().createFramebuffer(info);
 }
-vk::Framebuffer create(vk::RenderPass pass, std::span<const vk::ImageView> views,
+vk::Framebuffer create(vk::RenderPass pass, const vk::ImageView *views, uint32_t count,
                        vk::Extent2D extent, uint32_t layers) {
     vk::FramebufferCreateInfo info{};
     info.renderPass = pass;
-    info.attachmentCount = uint32_t(views.size());
-    info.pAttachments = views.data();
+    info.attachmentCount = count;
+    info.pAttachments = views;
     info.width = extent.width;
     info.height = extent.height;
     info.layers = layers;
