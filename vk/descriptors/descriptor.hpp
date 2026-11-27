@@ -6,6 +6,9 @@ struct state {
         vk::DescriptorPool pool{};
     };
     state *get();
+    vk::DescriptorPool create(const vk::DescriptorPoolCreateInfo &info);
+    void destroy(vk::DescriptorPool pool);
+    std::vector<vk::DescriptorSet> allocate(vk::DescriptorPool pool,const std::vector<vk::DescriptorSetLayout> &layouts);
     vk::DescriptorPool init(const vk::DescriptorPoolCreateInfo &info);
     std::vector<vk::DescriptorSet> allocate(const std::vector<vk::DescriptorSetLayout> &layouts);
     void reset();
