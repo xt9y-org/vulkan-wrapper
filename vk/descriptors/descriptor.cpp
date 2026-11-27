@@ -14,7 +14,7 @@ vk::DescriptorPool init(const vk::DescriptorPoolCreateInfo &info)
     s.pool = create(info);
     return s.pool;
 }
-std::vector<vk::DescriptorSet> allocate(vk::DescriptorPool pool,const std::vector<vk::DescriptorSetLayout> &layouts)
+std::vector<vk::DescriptorSet> allocate(vk::DescriptorPool pool,const vk::ArrayProxy<const vk::DescriptorSetLayout> &layouts)
 {
     vk::DescriptorSetAllocateInfo info{};
     info.descriptorPool = pool;
@@ -22,7 +22,7 @@ std::vector<vk::DescriptorSet> allocate(vk::DescriptorPool pool,const std::vecto
     info.pSetLayouts = layouts.data();
     return require_device().allocateDescriptorSets(info);
 }
-std::vector<vk::DescriptorSet> allocate(const std::vector<vk::DescriptorSetLayout> &layouts)
+std::vector<vk::DescriptorSet> allocate(const vk::ArrayProxy<const vk::DescriptorSetLayout> &layouts)
 {return allocate(get()->pool,layouts);}
 void reset()
 {

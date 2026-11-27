@@ -1,9 +1,9 @@
 #include "../internal.hpp"
 namespace vk::submit {
-void queue(vk::Queue q, const std::vector<vk::SubmitInfo> &submits, vk::Fence f) {
+void queue(vk::Queue q, const vk::ArrayProxy<const vk::SubmitInfo> &submits, vk::Fence f) {
     q.submit(submits, f);
 }
-void queue2(vk::Queue q, const std::vector<vk::SubmitInfo2> &submits, vk::Fence f) {
+void queue2(vk::Queue q, const vk::ArrayProxy<const vk::SubmitInfo2> &submits, vk::Fence f) {
     if (!vk::device::synchronization2_available())
         throw std::logic_error("Synchronization2 is not enabled");
     if (vk::internal::core_synchronization2())

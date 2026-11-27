@@ -15,7 +15,7 @@ struct state {
                                             vk::CommandBufferLevel::ePrimary);
     vk::CommandBuffer begin_one_time();
     void end(vk::CommandBuffer cmd);
-    void free(const std::vector<vk::CommandBuffer> &commands);
+    void free(const vk::ArrayProxy<const vk::CommandBuffer> &commands);
     void shutdown();
 }
 }

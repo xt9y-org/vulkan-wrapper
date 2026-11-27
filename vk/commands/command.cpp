@@ -34,7 +34,7 @@ vk::CommandBuffer begin_one_time()
     return command;
 }
 void end(vk::CommandBuffer cmd) { cmd.end(); }
-void free(const std::vector<vk::CommandBuffer> &commands)
+void free(const vk::ArrayProxy<const vk::CommandBuffer> &commands)
 {
     require_device().freeCommandBuffers(get()->pool, commands);
 }
