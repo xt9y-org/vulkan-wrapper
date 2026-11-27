@@ -1,10 +1,14 @@
 #include "../internal.hpp"
 #include <cstring>
 using vk::internal::require_device;
-using vk::internal::require_instance;
-using vk::internal::require_physical;
 namespace vk {
 namespace buffer {
+namespace {
+memory::buffer_allocation allocation(const resource &r)
+{
+    return {r.memory, r.memory_offset, r.memory_allocation_size, r.pooled};
+}
+}
 resource create(vk::DeviceSize size, vk::BufferUsageFlags usage,
                 vk::MemoryPropertyFlags properties)
 {
@@ -18,17 +22,16 @@ resource create(vk::DeviceSize size, vk::BufferUsageFlags usage,
     r.size = size;
     r.properties = properties;
     try {
-        const auto allocation = memory::allocate_buffer(
+        const auto allocated = memory::allocate_buffer(
             d.getBufferMemoryRequirements(r.handle), properties);
-        r.memory = allocation.handle;
-        r.memory_offset = allocation.offset;
-        r.memory_allocation_size = allocation.size;
-        r.pooled = allocation.pooled;
+        r.memory = allocated.handle;
+        r.memory_offset = allocated.offset;
+        r.memory_allocation_size = allocated.size;
+        r.pooled = allocated.pooled;
         d.bindBufferMemory(r.handle, r.memory, r.memory_offset);
     } catch (...) {
         if (r.memory)
-            memory::free_buffer({r.memory, r.memory_offset,
-                                 r.memory_allocation_size, r.pooled});
+            memory::free_buffer(allocation(r));
         d.destroyBuffer(r.handle);
         throw;
     }
@@ -37,30 +40,25 @@ resource create(vk::DeviceSize size, vk::BufferUsageFlags usage,
 void destroy(resource &r)
 {
     auto d = require_device();
-    if (r.mapped) memory::unmap_buffer(
-        {r.memory, r.memory_offset, r.memory_allocation_size, r.pooled});
+    if (r.mapped) memory::unmap_buffer(allocation(r));
     if (r.handle) d.destroyBuffer(r.handle);
-    if (r.memory) memory::free_buffer(
-        {r.memory, r.memory_offset, r.memory_allocation_size, r.pooled});
+    if (r.memory) memory::free_buffer(allocation(r));
     r = {};
 }
 void *map(resource &r)
 {
-    if (!r.mapped) r.mapped = memory::map_buffer(
-        {r.memory, r.memory_offset, r.memory_allocation_size, r.pooled});
+    if (!r.mapped) r.mapped = memory::map_buffer(allocation(r));
     return r.mapped;
 }
 void unmap(resource &r)
 {
-    if (r.mapped) memory::unmap_buffer(
-        {r.memory, r.memory_offset, r.memory_allocation_size, r.pooled});
+    if (r.mapped) memory::unmap_buffer(allocation(r));
     r.mapped = nullptr;
 }
 void flush(const resource &r)
 {
     if (r.properties & vk::MemoryPropertyFlagBits::eHostCoherent) return;
-    memory::flush_buffer(
-        {r.memory, r.memory_offset, r.memory_allocation_size, r.pooled});
+    memory::flush_buffer(allocation(r));
 }
 void write(resource &r, const void *data, size_t bytes, size_t offset)
 {

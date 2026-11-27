@@ -3,8 +3,6 @@
 #include <filesystem>
 #include <fstream>
 using vk::internal::require_device;
-using vk::internal::require_instance;
-using vk::internal::require_physical;
 namespace vk {
 namespace pipeline_cache {
 state *get() { static state data; return &data; }
