@@ -1,5 +1,5 @@
 #pragma once
-#include "../../common.hpp"
+#include <cstddef>
 #include <cmath>
 #include <algorithm>
 #include <array>
