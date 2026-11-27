@@ -20,8 +20,7 @@ void dispatch(vk::CommandBuffer cmd, uint32_t x, uint32_t y, uint32_t z) {
 void barrier2(vk::CommandBuffer cmd, const vk::DependencyInfo &info) {
     if (!vk::device::synchronization2_available())
         throw std::logic_error("Synchronization2 is not enabled");
-    const auto &d = VULKAN_HPP_DEFAULT_DISPATCHER;
-    if (vk::device::core_api(VK_API_VERSION_1_3) && d.vkQueueSubmit2 && d.vkCmdPipelineBarrier2)
+    if (vk::internal::core_synchronization2())
         cmd.pipelineBarrier2(info);
     else
         cmd.pipelineBarrier2KHR(info);

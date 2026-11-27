@@ -40,7 +40,7 @@ resource create(vk::DeviceSize size, vk::BufferUsageFlags usage,
 void destroy(resource &r)
 {
     auto d = require_device();
-    if (r.mapped) memory::unmap_buffer(allocation(r));
+    unmap(r);
     if (r.handle) d.destroyBuffer(r.handle);
     if (r.memory) memory::free_buffer(allocation(r));
     r = {};
@@ -70,11 +70,7 @@ void write(resource &r, const void *data, size_t bytes, size_t offset)
 vk::DescriptorBufferInfo descriptor(const resource &r,
                                      vk::DeviceSize offset, vk::DeviceSize range)
 {
-    vk::DescriptorBufferInfo info{};
-    info.buffer = r.handle;
-    info.offset = offset;
-    info.range = range;
-    return info;
+    return {r.handle,offset,range};
 }
 }
 }

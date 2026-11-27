@@ -53,32 +53,27 @@ bool supports_extension(const char *name)
         if (std::strcmp(ext.extensionName.data(), name) == 0) return true;
     return false;
 }
-bool supports_shader_float16_khr()
-{
-    if(!supports_extension(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME)||
-       !VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2KHR)return false;
-    VkPhysicalDeviceShaderFloat16Int8Features half{};
-    half.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
-    VkPhysicalDeviceFeatures2 features{};
-    features.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    features.pNext=&half;
-    VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2KHR(
-        static_cast<VkPhysicalDevice>(require_physical()),&features);
-    return half.shaderFloat16!=VK_FALSE;
-}
-static bool query_features(void *next)
+static bool query_features(void *next,bool khr_only=false)
 {
     VkPhysicalDeviceFeatures2 features{};
     features.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     features.pNext=next;
     auto &dispatch=VULKAN_HPP_DEFAULT_DISPATCHER;
     const auto physical=static_cast<VkPhysicalDevice>(require_physical());
-    if(instance::get()->api_version>=VK_API_VERSION_1_1&&dispatch.vkGetPhysicalDeviceFeatures2)
+    if(!khr_only&&instance::get()->api_version>=VK_API_VERSION_1_1&&dispatch.vkGetPhysicalDeviceFeatures2)
         dispatch.vkGetPhysicalDeviceFeatures2(physical,&features);
     else if(dispatch.vkGetPhysicalDeviceFeatures2KHR)
         dispatch.vkGetPhysicalDeviceFeatures2KHR(physical,&features);
     else return false;
     return true;
+}
+bool supports_shader_float16_khr()
+{
+    if(!supports_extension(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME)||
+       !VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2KHR)return false;
+    VkPhysicalDeviceShaderFloat16Int8Features half{};
+    half.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
+    return query_features(&half,true)&&half.shaderFloat16!=VK_FALSE;
 }
 bool supports_synchronization2_khr()
 {

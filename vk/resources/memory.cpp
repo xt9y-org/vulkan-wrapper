@@ -12,6 +12,13 @@ namespace {
 constexpr vk::DeviceSize small_buffer_limit = 1024 * 1024;
 constexpr vk::DeviceSize buffer_pool_size = 16 * 1024 * 1024;
 
+vk::DeviceMemory allocate_type(vk::DeviceSize size,uint32_t type)
+{
+    vk::MemoryAllocateInfo info{};
+    info.allocationSize=size;info.memoryTypeIndex=type;
+    return require_device().allocateMemory(info);
+}
+
 struct free_range {
     vk::DeviceSize offset;
     vk::DeviceSize size;
@@ -122,10 +129,7 @@ uint32_t type_index(uint32_t bits, vk::MemoryPropertyFlags flags)
 vk::DeviceMemory allocate(const vk::MemoryRequirements &requirements,
                           vk::MemoryPropertyFlags flags)
 {
-    vk::MemoryAllocateInfo info{};
-    info.allocationSize = requirements.size;
-    info.memoryTypeIndex = type_index(requirements.memoryTypeBits, flags);
-    return require_device().allocateMemory(info);
+    return allocate_type(requirements.size,type_index(requirements.memoryTypeBits,flags));
 }
 
 buffer_allocation allocate_buffer(const vk::MemoryRequirements &requirements,
@@ -133,7 +137,7 @@ buffer_allocation allocate_buffer(const vk::MemoryRequirements &requirements,
 {
     const auto type = type_index(requirements.memoryTypeBits, flags);
     if (requirements.size > small_buffer_limit)
-        return {allocate(requirements, flags), 0, requirements.size, false};
+        return {allocate_type(requirements.size,type),0,requirements.size,false};
 
     const auto atom_size = std::max<vk::DeviceSize>(
         1, physical_device::get()->properties.limits.nonCoherentAtomSize);
@@ -151,13 +155,10 @@ buffer_allocation allocate_buffer(const vk::MemoryRequirements &requirements,
 
     const auto block_size = align_up(
         std::max(buffer_pool_size, allocation_size), atom_size);
-    vk::MemoryAllocateInfo info{};
-    info.allocationSize = block_size;
-    info.memoryTypeIndex = type;
     buffer_block block{};
     block.size = block_size;
     block.type = type;
-    block.memory = require_device().allocateMemory(info);
+    block.memory=allocate_type(block_size,type);
     try
     {
         block.free_ranges.push_back({0, block_size});
@@ -189,13 +190,13 @@ void free_buffer(const buffer_allocation &allocation)
     release_range(*block, allocation.offset, allocation.size);
 
     if (block->live_allocations != 0) return;
-    const auto other_empty = std::count_if(
+    const auto other_empty = std::any_of(
         buffer_blocks.begin(), buffer_blocks.end(),
         [block](const buffer_block &candidate) {
             return &candidate != &*block && candidate.type == block->type &&
                    candidate.live_allocations == 0;
         });
-    if (other_empty != 0)
+    if (other_empty)
     {
         if (block->mapped) require_device().unmapMemory(block->memory);
         require_device().freeMemory(block->memory);
