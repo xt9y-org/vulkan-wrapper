@@ -40,6 +40,9 @@ struct vec4 {
     constexpr vec4 operator/(float s) const { return {x / s, y / s, z / s, w / s}; }
 };
 
+constexpr vec3 component_min(vec3 a, vec3 b) { return {std::min(a.x,b.x), std::min(a.y,b.y), std::min(a.z,b.z)}; }
+constexpr vec3 component_max(vec3 a, vec3 b) { return {std::max(a.x,b.x), std::max(a.y,b.y), std::max(a.z,b.z)}; }
+
 constexpr vec2 operator*(float s, vec2 v) { return v * s; }
 constexpr vec3 operator*(float s, vec3 v) { return v * s; }
 constexpr vec4 operator*(float s, vec4 v) { return v * s; }
