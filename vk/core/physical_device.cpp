@@ -66,13 +66,11 @@ bool supports_shader_float16_khr()
         static_cast<VkPhysicalDevice>(require_physical()),&features);
     return half.shaderFloat16!=VK_FALSE;
 }
-bool supports_synchronization2_khr()
+static bool query_features(void *next)
 {
-    if(!supports_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME))return false;
-    VkPhysicalDeviceSynchronization2Features sync{};
-    sync.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
     VkPhysicalDeviceFeatures2 features{};
-    features.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;features.pNext=&sync;
+    features.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features.pNext=next;
     auto &dispatch=VULKAN_HPP_DEFAULT_DISPATCHER;
     const auto physical=static_cast<VkPhysicalDevice>(require_physical());
     if(instance::get()->api_version>=VK_API_VERSION_1_1&&dispatch.vkGetPhysicalDeviceFeatures2)
@@ -80,24 +78,21 @@ bool supports_synchronization2_khr()
     else if(dispatch.vkGetPhysicalDeviceFeatures2KHR)
         dispatch.vkGetPhysicalDeviceFeatures2KHR(physical,&features);
     else return false;
-    return sync.synchronization2!=VK_FALSE;
+    return true;
+}
+bool supports_synchronization2_khr()
+{
+    if(!supports_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME))return false;
+    VkPhysicalDeviceSynchronization2Features sync{};
+    sync.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+    return query_features(&sync) && sync.synchronization2!=VK_FALSE;
 }
 bool supports_timeline_semaphore_khr()
 {
     if(!supports_extension(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME))return false;
     VkPhysicalDeviceTimelineSemaphoreFeatures timeline{};
     timeline.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
-    VkPhysicalDeviceFeatures2 features{};
-    features.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    features.pNext=&timeline;
-    auto &dispatch=VULKAN_HPP_DEFAULT_DISPATCHER;
-    const auto physical=static_cast<VkPhysicalDevice>(require_physical());
-    if(instance::get()->api_version>=VK_API_VERSION_1_1&&dispatch.vkGetPhysicalDeviceFeatures2)
-        dispatch.vkGetPhysicalDeviceFeatures2(physical,&features);
-    else if(dispatch.vkGetPhysicalDeviceFeatures2KHR)
-        dispatch.vkGetPhysicalDeviceFeatures2KHR(physical,&features);
-    else return false;
-    return timeline.timelineSemaphore!=VK_FALSE;
+    return query_features(&timeline) && timeline.timelineSemaphore!=VK_FALSE;
 }
 void shutdown() { *get() = {}; }
 }

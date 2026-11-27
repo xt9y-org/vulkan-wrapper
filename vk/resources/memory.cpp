@@ -42,10 +42,13 @@ vk::DeviceSize align_up(vk::DeviceSize value, vk::DeviceSize alignment)
 
 auto find_block(vk::DeviceMemory memory)
 {
-    return std::find_if(buffer_blocks.begin(), buffer_blocks.end(),
+    auto block = std::find_if(buffer_blocks.begin(), buffer_blocks.end(),
                         [memory](const buffer_block &block) {
                             return block.memory == memory;
                         });
+    if (block == buffer_blocks.end())
+        throw std::runtime_error("Vulkan buffer pool allocation was not found");
+    return block;
 }
 
 bool allocate_range(buffer_block &block, vk::DeviceSize size,
@@ -183,8 +186,6 @@ void free_buffer(const buffer_allocation &allocation)
 
     std::lock_guard<std::mutex> lock(buffer_pool_mutex);
     auto block = find_block(allocation.handle);
-    if (block == buffer_blocks.end())
-        throw std::runtime_error("Vulkan buffer pool allocation was not found");
     release_range(*block, allocation.offset, allocation.size);
 
     if (block->live_allocations != 0) return;
@@ -210,8 +211,6 @@ void *map_buffer(const buffer_allocation &allocation)
 
     std::lock_guard<std::mutex> lock(buffer_pool_mutex);
     auto block = find_block(allocation.handle);
-    if (block == buffer_blocks.end())
-        throw std::runtime_error("Vulkan buffer pool allocation was not found");
     if (!block->mapped)
         block->mapped = require_device().mapMemory(
             block->memory, 0, VK_WHOLE_SIZE);
