@@ -28,24 +28,23 @@ vk::PhysicalDevice init(uint32_t index)
     if (index >= devices.size()) throw std::out_of_range("physical device index");
     return adopt(devices[index]);
 }
+static uint32_t queue_index(const std::vector<vk::QueueFamilyProperties> &families,vk::QueueFlags flags)
+{
+    for(uint32_t i=0;i<families.size();++i)
+        if(families[i].queueCount&&(families[i].queueFlags&flags)==flags)return i;
+    return UINT32_MAX;
+}
 vk::PhysicalDevice pick(vk::QueueFlags flags)
 {
-    auto devices = instance::physical_devices();
-    for (auto candidate : devices) {
-        for (auto family : candidate.getQueueFamilyProperties()) {
-            if (family.queueCount && (family.queueFlags & flags) == flags)
-                return adopt(candidate);
-        }
-    }
+    for(auto candidate:instance::physical_devices())
+        if(queue_index(candidate.getQueueFamilyProperties(),flags)!=UINT32_MAX)return adopt(candidate);
     throw std::runtime_error("no compatible physical device");
 }
 uint32_t find_queue(vk::QueueFlags flags)
 {
-    auto &families = get()->queue_families;
-    for (uint32_t i = 0; i < families.size(); ++i)
-        if (families[i].queueCount && (families[i].queueFlags & flags) == flags)
-            return i;
-    throw std::runtime_error("queue family unavailable");
+    const auto index=queue_index(get()->queue_families,flags);
+    if(index==UINT32_MAX)throw std::runtime_error("queue family unavailable");
+    return index;
 }
 bool supports_extension(const char *name)
 {
@@ -67,27 +66,31 @@ static bool query_features(void *next,bool khr_only=false)
     else return false;
     return true;
 }
+template<class Feature>
+static bool supports_feature(const char *extension,VkStructureType type,VkBool32 Feature::*member,bool khr_only=false)
+{
+    if(!supports_extension(extension))return false;
+    Feature feature{};
+    feature.sType=type;
+    return query_features(&feature,khr_only)&&(feature.*member)!=VK_FALSE;
+}
 bool supports_shader_float16_khr()
 {
-    if(!supports_extension(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME)||
-       !VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2KHR)return false;
-    VkPhysicalDeviceShaderFloat16Int8Features half{};
-    half.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
-    return query_features(&half,true)&&half.shaderFloat16!=VK_FALSE;
+    return supports_feature(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES,
+        &VkPhysicalDeviceShaderFloat16Int8Features::shaderFloat16,true);
 }
 bool supports_synchronization2_khr()
 {
-    if(!supports_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME))return false;
-    VkPhysicalDeviceSynchronization2Features sync{};
-    sync.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
-    return query_features(&sync) && sync.synchronization2!=VK_FALSE;
+    return supports_feature(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES,
+        &VkPhysicalDeviceSynchronization2Features::synchronization2);
 }
 bool supports_timeline_semaphore_khr()
 {
-    if(!supports_extension(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME))return false;
-    VkPhysicalDeviceTimelineSemaphoreFeatures timeline{};
-    timeline.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
-    return query_features(&timeline) && timeline.timelineSemaphore!=VK_FALSE;
+    return supports_feature(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME,
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
+        &VkPhysicalDeviceTimelineSemaphoreFeatures::timelineSemaphore);
 }
 void shutdown() { *get() = {}; }
 }

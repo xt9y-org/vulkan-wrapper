@@ -36,6 +36,12 @@ struct buffer_block {
 std::mutex buffer_pool_mutex;
 std::vector<buffer_block> buffer_blocks;
 
+void destroy_block(vk::Device device,const buffer_block &block)
+{
+    if(block.mapped)device.unmapMemory(block.memory);
+    if(block.memory)device.freeMemory(block.memory);
+}
+
 vk::DeviceSize align_up(vk::DeviceSize value, vk::DeviceSize alignment)
 {
     if (!alignment) return value;
@@ -198,8 +204,7 @@ void free_buffer(const buffer_allocation &allocation)
         });
     if (other_empty)
     {
-        if (block->mapped) require_device().unmapMemory(block->memory);
-        require_device().freeMemory(block->memory);
+        destroy_block(require_device(),*block);
         buffer_blocks.erase(block);
     }
 }
@@ -241,12 +246,8 @@ void shutdown()
         buffer_blocks.clear();
         return;
     }
-    auto d = require_device();
-    for (auto &block : buffer_blocks)
-    {
-        if (block.mapped) d.unmapMemory(block.memory);
-        if (block.memory) d.freeMemory(block.memory);
-    }
+    auto d=require_device();
+    for(const auto &block:buffer_blocks)destroy_block(d,block);
     buffer_blocks.clear();
 }
 
