@@ -1,7 +1,6 @@
 #include "../internal.hpp"
 using vk::internal::require_device;
 using vk::internal::require_instance;
-using vk::internal::require_physical;
 namespace vk {
 namespace debug {
 state *get() { static state data; return &data; }

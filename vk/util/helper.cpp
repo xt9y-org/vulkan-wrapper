@@ -1,7 +1,4 @@
 #include "../internal.hpp"
-using vk::internal::require_device;
-using vk::internal::require_instance;
-using vk::internal::require_physical;
 namespace vk {
 namespace util {
 vk::Extent2D extent(uint32_t width, uint32_t height) { return {width, height}; }

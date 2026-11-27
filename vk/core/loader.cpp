@@ -3,9 +3,6 @@
 #include <cstdlib>
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 namespace { std::unique_ptr<vk::detail::DynamicLoader> dynamic_loader; }
-using vk::internal::require_device;
-using vk::internal::require_instance;
-using vk::internal::require_physical;
 namespace vk {
 namespace loader {
 state *get() { static state data; return &data; }

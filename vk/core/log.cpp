@@ -1,9 +1,6 @@
 #include "../internal.hpp"
 #include <cstdio>
 namespace { vk::log::callback log_callback = nullptr; }
-using vk::internal::require_device;
-using vk::internal::require_instance;
-using vk::internal::require_physical;
 namespace vk {
 namespace log {
 void set_callback(callback fn) { log_callback = fn; }
